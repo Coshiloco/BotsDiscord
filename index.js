@@ -1,34 +1,31 @@
 require('dotenv').config();
 
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
-
 const fs = require('fs');
 
-const allIntents = new Client({ intents: 
-    [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildBans,
-    GatewayIntentBits.GuildEmojisAndStickers,
-    GatewayIntentBits.GuildIntegrations,
-    GatewayIntentBits.GuildWebhooks,
-    GatewayIntentBits.GuildInvites,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildPresences,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMessageReactions,
-    GatewayIntentBits.GuildMessageTyping,
-    GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.DirectMessageReactions,
-    GatewayIntentBits.DirectMessageTyping,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildScheduledEvents
-    
+const allIntents = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildBans,
+        GatewayIntentBits.GuildEmojisAndStickers,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildWebhooks,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMessageTyping,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.DirectMessageReactions,
+        GatewayIntentBits.DirectMessageTyping,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildScheduledEvents
     ],
 });
 
 const client = allIntents;
-
 
 client.commands = new Collection();
 client.buttons = new Collection();
@@ -70,10 +67,8 @@ client.on('messageCreate', message => {
 });
 
 client.on('interactionCreate', async interaction => {
-    if (interaction.isButton()) {
-        const button = client.buttons.get(interaction.customId);
-        if (button) button.execute(interaction);
-    }
+    const event = client.buttons.get(interaction.customId);
+    if (event) event.execute(interaction);
 });
 
 client.login(process.env.DISCORD_TOKEN);
