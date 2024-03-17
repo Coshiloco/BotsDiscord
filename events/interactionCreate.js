@@ -1,13 +1,14 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionType } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction) {
-        if (interaction.type !== InteractionType.MessageComponent) return;
+        if (!interaction.isButton()) return;
         if (interaction.customId === 'startExercise') {
-            await interaction.deferReply();
+            await interaction.deferReply({ ephemeral: true });
+            interaction.editReply({ content: 'El temporizador de la bicicleta estática ha comenzado.' });
             startCountdown(interaction, 20 * 60);
         }
     },
@@ -15,20 +16,17 @@ module.exports = {
 
 async function startCountdown(interaction, totalTime) {
     let timeLeft = totalTime;
-    await interaction.editReply({ embeds: [getEmbed(timeLeft)] });
+    let lastMessage = await interaction.channel.send({ embeds: [getEmbed(timeLeft)] });
 
     const countdown = setInterval(async () => {
         timeLeft--;
         if (timeLeft <= 0) {
             clearInterval(countdown);
-            await interaction.followUp({ embeds: [getFinishedEmbed()], components: [] });
+            lastMessage = await interaction.channel.send({ embeds: [getFinishedEmbed()] });
             saveExerciseSession(interaction.user.id);
         } else if (timeLeft % 60 === 0) {
-            if (timeLeft > 15 * 60) {
-                await interaction.editReply({ embeds: [getEmbed(timeLeft)] });
-            } else {
-                await interaction.followUp({ embeds: [getEmbed(timeLeft)] });
-            }
+            await lastMessage.delete();
+            lastMessage = await interaction.channel.send({ embeds: [getEmbed(timeLeft)] });
         }
     }, 1000);
 }
