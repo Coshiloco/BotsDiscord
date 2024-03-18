@@ -68,7 +68,7 @@ client.on('messageCreate', message => {
 
 client.on('interactionCreate', async interaction => {
     const event = client.buttons.get(interaction.customId);
-    if (event) event.execute(interaction);
+    if (event) event.execute(interaction, client);
 });
 
 client.login(process.env.DISCORD_TOKEN);

@@ -4,32 +4,54 @@ const path = require('path');
 
 module.exports = {
     name: 'interactionCreate',
-    async execute(interaction) {
+    async execute(interaction, client) {
         if (!interaction.isButton()) return;
-        if (interaction.customId === 'startExercise') {
-            await interaction.deferReply({ ephemeral: true });
-            interaction.editReply({ content: 'El temporizador de la bicicleta estática ha comenzado.' });
-            startCountdown(interaction, 20 * 60);
-        }
+    if (interaction.customId === 'startExercise') {
+        await interaction.deferReply({ ephemeral: true });
+        interaction.editReply({ content: 'The timer started...' });
+        startSegmentedTimer(interaction, 20 * 60, client);
+    }
+    
     },
 };
 
-async function startCountdown(interaction, totalTime) {
-    let timeLeft = totalTime;
-    let lastMessage = await interaction.channel.send({ embeds: [getEmbed(timeLeft)] });
+async function startSegmentedTimer(interaction, totalTimeInSeconds, client) {
+    const segmentDurationInSeconds = 14 * 60; 
+    let remainingTime = totalTimeInSeconds;
 
-    const countdown = setInterval(async () => {
-        timeLeft--;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            lastMessage = await interaction.channel.send({ embeds: [getFinishedEmbed()] });
+    const handleTimerSegment = async () => {
+        if (remainingTime <= 0) {
+            const channel = await client.channels.fetch(interaction.channelId);
+            const finishedEmbed = new EmbedBuilder()
+                .setColor(0x00FF00)
+                .setTitle('¡Time completed!')
+                .setDescription('¡Good Work in the static bike!')
+                .setTimestamp();
+            await channel.send({ embeds: [finishedEmbed] });
             saveExerciseSession(interaction.user.id);
-        } else if (timeLeft % 60 === 0) {
-            await lastMessage.delete();
-            lastMessage = await interaction.channel.send({ embeds: [getEmbed(timeLeft)] });
+            return;
         }
-    }, 1000);
+
+        const currentSegmentTime = Math.min(remainingTime, segmentDurationInSeconds);
+        remainingTime -= currentSegmentTime;
+
+        setTimeout(async () => {
+            if (remainingTime > 0) {
+                const timeUpdateEmbed = new EmbedBuilder()
+                    .setColor(0x0099FF)
+                    .setTitle('Exercise in progress...')
+                    .setDescription(`Time left: ${Math.floor(remainingTime / 60)}:${String(remainingTime % 60).padStart(2, '0')}`)
+                    .setTimestamp();
+                await interaction.followUp({ embeds: [timeUpdateEmbed] });
+            }
+
+            handleTimerSegment();
+        }, currentSegmentTime * 1000);
+    };
+
+    handleTimerSegment();
 }
+
 
 function getEmbed(timeLeft) {
     const minutes = Math.floor(timeLeft / 60);
