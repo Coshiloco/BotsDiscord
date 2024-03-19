@@ -3,6 +3,8 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, ModalBuilder, TextInputBuilder, ActionRowBuilder, TextInputStyle } = require('discord.js');
 const fs = require('fs');
 
+const { startSegmentedTimer } = require('./events/interactionCreate.js');
+
 const allIntents = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -87,8 +89,9 @@ client.on('interactionCreate', async interaction => {
         } else if (interaction.isModalSubmit()) {
             if (interaction.customId === 'modalForBikeTimeCustomModal') {
                 const sessionDuration = interaction.fields.getTextInputValue('sessionDuration');
-                console.log(`Modal submitted with duration: ${sessionDuration}`);
-                await interaction.reply({ content: `Session duration set to ${sessionDuration} minutes.`, ephemeral: true });
+                await interaction.deferReply({ ephemeral: true });
+                interaction.editReply({ content: 'The timer started...' });
+                startSegmentedTimer(interaction, sessionDuration * 60, client);
             }
         }
 });

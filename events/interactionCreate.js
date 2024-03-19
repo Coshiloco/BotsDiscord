@@ -91,3 +91,6 @@ function saveExerciseSession(userId) {
     sessions.push(session);
     fs.writeFileSync(sessionsFilePath, JSON.stringify(sessions, null, 4));
 }
+
+module.exports.startSegmentedTimer = startSegmentedTimer;
+
