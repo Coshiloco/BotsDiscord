@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, ModalBuilder, TextInputBuilder, ActionRowBuilder, TextInputStyle } = require('discord.js');
 const fs = require('fs');
 
 const allIntents = new Client({
@@ -69,6 +69,28 @@ client.on('messageCreate', message => {
 client.on('interactionCreate', async interaction => {
     const event = client.buttons.get(interaction.customId);
     if (event) event.execute(interaction, client);
+        if (interaction.isButton()) {
+            if (interaction.customId === 'modalForBikeTimeCustom') {
+                const modal = new ModalBuilder()
+                    .setCustomId('modalForBikeTimeCustomModal')
+                    .setTitle('Custom Bike Session')
+                    .addComponents(
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('sessionDuration')
+                                .setLabel('Enter your session duration in minutes')
+                                .setStyle(TextInputStyle.Short)
+                        )
+                    );
+                await interaction.showModal(modal);
+            }
+        } else if (interaction.isModalSubmit()) {
+            if (interaction.customId === 'modalForBikeTimeCustomModal') {
+                const sessionDuration = interaction.fields.getTextInputValue('sessionDuration');
+                console.log(`Modal submitted with duration: ${sessionDuration}`);
+                await interaction.reply({ content: `Session duration set to ${sessionDuration} minutes.`, ephemeral: true });
+            }
+        }
 });
 
 client.login(process.env.DISCORD_TOKEN);

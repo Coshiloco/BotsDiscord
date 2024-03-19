@@ -16,10 +16,11 @@ module.exports = {
                 .setCustomId('startExercise')
                 .setLabel('Start Workout')
                 .setStyle(ButtonStyle.Success),
-                new ButtonBuilder()
-                .setCustomId("openModal")
-                .setLabel("Set Custom Time")
-                .setStyle(ButtonStyle.Primary)
+                
+            new ButtonBuilder()
+            .setCustomId('modalForBikeTimeCustom')
+            .setLabel('Start Workout')
+            .setStyle(ButtonStyle.Secondary),
         );
 
         await message.reply({ embeds: [embed], components: [row] });
