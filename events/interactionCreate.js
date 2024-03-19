@@ -9,13 +9,13 @@ module.exports = {
     if (interaction.customId === 'startExercise') {
         await interaction.deferReply({ ephemeral: true });
         interaction.editReply({ content: 'The timer started...' });
-        startSegmentedTimer(interaction, 20 * 60, client);
+        startSegmentedTimer(interaction, 20 * 60, client, 20);
     }
     
     },
 };
 
-async function startSegmentedTimer(interaction, totalTimeInSeconds, client) {
+async function startSegmentedTimer(interaction, totalTimeInSeconds, client, timeSelected) {
     const segmentDurationInSeconds = 14 * 60; 
     let remainingTime = totalTimeInSeconds;
 
@@ -28,7 +28,7 @@ async function startSegmentedTimer(interaction, totalTimeInSeconds, client) {
                 .setDescription('¡Good Work in the static bike!')
                 .setTimestamp();
             await channel.send({ embeds: [finishedEmbed] });
-            saveExerciseSession(interaction.user.id);
+            saveExerciseSession(interaction.user.id, timeSelected);
             return;
         }
 
@@ -71,17 +71,18 @@ function getFinishedEmbed() {
         .setTimestamp();
 }
 
-function saveExerciseSession(userId) {
+function saveExerciseSession(userId, timeSelected) {
     const session = {
         userId: userId,
-        startTime: new Date().toISOString(),
-        endTime: new Date(new Date().getTime() + 20 * 60000).toISOString(),
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString(),
+        startTime: new Date().toLocaleString('es-ES', { hour12: false }),
+        endTime: new Date(new Date().getTime() + timeSelected * 60000).toLocaleString('es-ES', { hour12: false }),
+        date: new Date().toLocaleDateString('es-ES'),
+        time: new Date().toLocaleTimeString('es-ES', { hour12: false }),
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1,
         day: new Date().getDate()
     };
+    
 
     const sessionsFilePath = path.join(__dirname, 'exercise_sessions.json');
     let sessions = [];
@@ -93,4 +94,4 @@ function saveExerciseSession(userId) {
 }
 
 module.exports.startSegmentedTimer = startSegmentedTimer;
-
+module.exports.saveExerciseSession = saveExerciseSession;

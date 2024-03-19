@@ -19,7 +19,7 @@ module.exports = {
                 
             new ButtonBuilder()
             .setCustomId('modalForBikeTimeCustom')
-            .setLabel('Start Workout')
+            .setLabel('Start Workout With Your Custom Time')
             .setStyle(ButtonStyle.Secondary),
         );
 

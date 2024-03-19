@@ -3,7 +3,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, ModalBuilder, TextInputBuilder, ActionRowBuilder, TextInputStyle } = require('discord.js');
 const fs = require('fs');
 
-const { startSegmentedTimer } = require('./events/interactionCreate.js');
+const { startSegmentedTimer, saveExerciseSession } = require('./events/interactionCreate.js');
 
 const allIntents = new Client({
     intents: [
@@ -91,7 +91,8 @@ client.on('interactionCreate', async interaction => {
                 const sessionDuration = interaction.fields.getTextInputValue('sessionDuration');
                 await interaction.deferReply({ ephemeral: true });
                 interaction.editReply({ content: 'The timer started...' });
-                startSegmentedTimer(interaction, sessionDuration * 60, client);
+                startSegmentedTimer(interaction, sessionDuration * 60, client, sessionDuration);
+                
             }
         }
 });
