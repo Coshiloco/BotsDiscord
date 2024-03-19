@@ -28,7 +28,7 @@ async function startSegmentedTimer(interaction, totalTimeInSeconds, client, time
                 .setDescription('¡Good Work in the static bike!')
                 .setTimestamp();
             await channel.send({ embeds: [finishedEmbed] });
-            saveExerciseSession(interaction.user.id, timeSelected);
+            saveExerciseSession(client.user.tag, timeSelected);
             return;
         }
 
