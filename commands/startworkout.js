@@ -21,6 +21,11 @@ module.exports = {
             .setCustomId('modalForBikeTimeCustom')
             .setLabel('Start Workout With Your Custom Time')
             .setStyle(ButtonStyle.Secondary),
+            
+            new ButtonBuilder()
+            .setCustomId('captureAudio')
+            .setLabel('Capture Audio')
+            .setStyle(ButtonStyle.Primary),
         );
 
         await message.reply({ embeds: [embed], components: [row] });
