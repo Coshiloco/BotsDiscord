@@ -32,17 +32,10 @@ async function joinChannelAndPrepareForAudioProcessing(interaction) {
             const audioStream = receiver.subscribe(userId);
             const outputStream = createWriteStream(rawAudioPath);
             audioStream.pipe(outputStream);
-                console.log(`Audio stream for user ${userId} has ended.`);
-                ffmpeg()
-                .input(fs.createReadStream(rawAudioPath))
-                .inputFormat('s16le') // Formato de entrada (PCM)
-                .audioCodec('libmp3lame') // Códec de salida (MP3)
-                .toFormat('mp3')
-                .on('end', () => {
-                    console.log(`Archivo MP3 guardado en ${mp3OutputPath}`);
-                })
-                .save(mp3OutputPath);
-                audioStream.unpipe(outputStream);
+        });
+        
+        receiver.speaking.on('end', (userId) => {
+            console.log(`User ${userId} stopped speaking.`);
         });
 
         await interaction.followUp({ content: 'I have joined the voice channel and am ready to process audio.' });
