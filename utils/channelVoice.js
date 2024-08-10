@@ -44,65 +44,72 @@ async function joinChannelAndPrepareForAudioProcessing(interaction) {
 }
 
 function startRecording(interaction) {
-    interaction.deferReply();  // Defer the reply immediately
+    interaction.deferReply();  // Defer the reply to avoid timeout
 
     audioFilePath = path.join(__dirname, 'recorded-audio.wav');
 
     const ffmpegCommand = [
         'ffmpeg',
         '-f', 'dshow',
-        '-i', 'audio=Microphone Array (Realtek(R) Audio)', // Ajusta esto al dispositivo correcto
+        '-i', `"audio=Microphone Array (Realtek(R) Audio)"`,
         '-acodec', 'pcm_s16le',
         '-ar', '44100',
         '-ac', '1',
-        '-af', 'highpass=f=200, lowpass=f=3000',
+        '-af', '"highpass=f=200, lowpass=f=3000"',
         '-y', audioFilePath
     ].join(' ');
 
-    recordingProcess = exec(ffmpegCommand, (error) => {
+    recordingProcess = exec(ffmpegCommand, (error, stdout, stderr) => {
         if (error) {
             console.error('Error while recording:', error);
+            console.error('stderr:', stderr);
             interaction.followUp({ content: 'Error al grabar el audio.', ephemeral: true });
+            return;
         }
-    });
-
-    const row = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId('startRecording')
-                .setLabel('Start Recording')
-                .setStyle(ButtonStyle.Primary)
-                .setDisabled(true),
-            new ButtonBuilder()
-                .setCustomId('stopRecording')
-                .setLabel('Stop Recording')
-                .setStyle(ButtonStyle.Danger)
-        );
-
-    interaction.update({ components: [row] });
-}
-
-function stopRecording(interaction) {
-    if (recordingProcess) {
-        recordingProcess.kill('SIGINT');
-        recordingProcess = null;
-
-        interaction.followUp({ content: 'Grabación detenida. Aquí tienes el archivo de audio:', files: [audioFilePath] });
 
         const row = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('startRecording')
                     .setLabel('Start Recording')
-                    .setStyle(ButtonStyle.Primary),
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(true),
                 new ButtonBuilder()
                     .setCustomId('stopRecording')
                     .setLabel('Stop Recording')
                     .setStyle(ButtonStyle.Danger)
-                    .setDisabled(true)
             );
 
         interaction.update({ components: [row] });
+    });
+}
+
+function stopRecording(interaction) {
+    if (recordingProcess) {
+        recordingProcess.kill('SIGINT');  // Detener ffmpeg
+        recordingProcess = null;  // Liberar la variable para indicar que el proceso ha terminado
+
+        // Asegurarse de que la grabación se ha detenido antes de responder
+        setTimeout(() => {
+            interaction.followUp({ content: 'Grabación detenida. Aquí tienes el archivo de audio:', files: [audioFilePath] });
+
+            const row = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('startRecording')
+                        .setLabel('Start Recording')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('stopRecording')
+                        .setLabel('Stop Recording')
+                        .setStyle(ButtonStyle.Danger)
+                        .setDisabled(true)
+                );
+
+            interaction.update({ components: [row] });
+        }, 500);  // Un pequeño retraso para asegurarse de que el proceso ha terminado
+    } else {
+        interaction.followUp({ content: 'No hay una grabación en curso para detener.', ephemeral: true });
     }
 }
 
