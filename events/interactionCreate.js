@@ -2,7 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 
-const { joinChannelAndPrepareForAudioProcessing } = require("../utils/channelVoice.js");
+const { joinChannelAndPrepareForAudioProcessing, startRecording, stopRecording } = require('../utils/channelVoice');
 
 module.exports = {
   name: "interactionCreate",
@@ -14,15 +14,17 @@ module.exports = {
       startSegmentedTimer(interaction, 20 * 60, client, 20);
     }
 
-    if (interaction.customId === "captureAudio") {
-        await interaction.deferReply({ ephemeral: true }); // Defer the reply first
-        joinChannelAndPrepareForAudioProcessing(interaction)
-            .then(() => interaction.editReply({ content: 'Preparado para capturar audio.' }))
-            .catch((error) => {
-                console.error(error);
-                interaction.editReply({ content: 'Hubo un error al prepararse para capturar audio.' });
-            });
-    }
+    if (interaction.customId === 'captureAudio') {
+      await joinChannelAndPrepareForAudioProcessing(interaction);
+  }
+
+  if (interaction.customId === 'startRecording') {
+      startRecording(interaction);
+  }
+
+  if (interaction.customId === 'stopRecording') {
+      stopRecording(interaction);
+  }
   },
 };
 
