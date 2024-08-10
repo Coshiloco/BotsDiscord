@@ -44,12 +44,14 @@ async function joinChannelAndPrepareForAudioProcessing(interaction) {
 }
 
 function startRecording(interaction) {
+    interaction.deferReply();  // Defer the reply immediately
+
     audioFilePath = path.join(__dirname, 'recorded-audio.wav');
 
     const ffmpegCommand = [
         'ffmpeg',
         '-f', 'dshow',
-        '-i', 'audio=Microphone Array (Realtek(R) Audio)', // Ajusta esto a tu dispositivo de entrada
+        '-i', 'audio=Microphone Array (Realtek(R) Audio)', // Ajusta esto al dispositivo correcto
         '-acodec', 'pcm_s16le',
         '-ar', '44100',
         '-ac', '1',
