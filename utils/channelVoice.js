@@ -33,7 +33,6 @@ async function joinChannelAndPrepareForAudioProcessing(interaction) {
                     .setCustomId('stopRecording')
                     .setLabel('Stop Recording')
                     .setStyle(ButtonStyle.Danger)
-                    .setDisabled(true)
             );
 
         await interaction.reply({ content: 'Preparado para capturar audio. Usa los botones abajo para iniciar o detener la grabación.', components: [row] });
