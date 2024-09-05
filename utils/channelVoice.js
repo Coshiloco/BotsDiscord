@@ -1,11 +1,10 @@
-const { createWriteStream } = require('fs');
 const { exec } = require('child_process');
-const { joinVoiceChannel, entersState, VoiceConnectionStatus } = require('@discordjs/voice');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const path = require('path');
 
 let recordingProcess;
 let audioFilePath;
+let recordingStartTime;
 
 async function joinChannelAndPrepareForAudioProcessing(interaction) {
     if (!interaction.member.voice.channelId) {
@@ -13,38 +12,19 @@ async function joinChannelAndPrepareForAudioProcessing(interaction) {
         return;
     }
 
-    const voiceChannel = interaction.member.voice.channel;
-    const connection = joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId: interaction.guild.id,
-        adapterCreator: interaction.guild.voiceAdapterCreator,
-    });
+    const row = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('startRecording')
+                .setLabel('Start Recording')
+                .setStyle(ButtonStyle.Primary)
+        );
 
-    try {
-        await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
-
-        const row = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('startRecording')
-                    .setLabel('Start Recording')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('stopRecording')
-                    .setLabel('Stop Recording')
-                    .setStyle(ButtonStyle.Danger)
-            );
-
-        await interaction.reply({ content: 'Preparado para capturar audio. Usa los botones abajo para iniciar o detener la grabación.', components: [row] });
-    } catch (error) {
-        console.error(error);
-        await interaction.followUp({ content: 'Failed to join the voice channel.', ephemeral: true });
-    }
+    await interaction.reply({ content: 'Preparado para capturar audio. Usa el botón abajo para iniciar la grabación.', components: [row] });
 }
 
-function startRecording(interaction) {
-    interaction.deferReply();  // Defer the reply to avoid timeout
-
+async function startRecording(interaction, client) {
+    recordingStartTime = Date.now();
     audioFilePath = path.join(__dirname, 'recorded-audio.wav');
 
     const ffmpegCommand = [
@@ -65,50 +45,44 @@ function startRecording(interaction) {
             interaction.followUp({ content: 'Error al grabar el audio.', ephemeral: true });
             return;
         }
-
-        const row = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('startRecording')
-                    .setLabel('Start Recording')
-                    .setStyle(ButtonStyle.Primary)
-                    .setDisabled(true),
-                new ButtonBuilder()
-                    .setCustomId('stopRecording')
-                    .setLabel('Stop Recording')
-                    .setStyle(ButtonStyle.Danger)
-            );
-
-        interaction.update({ components: [row] });
     });
+
+    const row = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('stopRecording')
+                .setLabel('Stop Recording')
+                .setStyle(ButtonStyle.Danger)
+        );
+
+    const embed = new EmbedBuilder()
+        .setTitle('Recording in progress...')
+        .setDescription(`Recording started by ${interaction.user.tag}`)
+        .addFields(
+            { name: 'Channel', value: interaction.channel.name, inline: true },
+            { name: 'Started at', value: `<t:${Math.floor(recordingStartTime / 1000)}:T>`, inline: true }
+        )
+        .setTimestamp()
+        .setColor('RED');
+
+    await interaction.update({ content: null, embeds: [embed], components: [row] });
+
+    // Schedule regular updates to the embed to show recording duration
+    client.setInterval(async () => {
+        const elapsedSeconds = Math.floor((Date.now() - recordingStartTime) / 1000);
+        embed.setDescription(`Recording started by ${interaction.user.tag}\n\n**Recording duration: ${elapsedSeconds}s**`);
+        await interaction.editReply({ embeds: [embed] });
+    }, 5000);
 }
 
-function stopRecording(interaction) {
+async function stopRecording(interaction) {
     if (recordingProcess) {
-        recordingProcess.kill('SIGINT');  // Detener ffmpeg
-        recordingProcess = null;  // Liberar la variable para indicar que el proceso ha terminado
+        recordingProcess.kill('SIGINT');
+        recordingProcess = null;
 
-        // Asegurarse de que la grabación se ha detenido antes de responder
-        setTimeout(() => {
-            interaction.followUp({ content: 'Grabación detenida. Aquí tienes el archivo de audio:', files: [audioFilePath] });
-
-            const row = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('startRecording')
-                        .setLabel('Start Recording')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('stopRecording')
-                        .setLabel('Stop Recording')
-                        .setStyle(ButtonStyle.Danger)
-                        .setDisabled(true)
-                );
-
-            interaction.update({ components: [row] });
-        }, 500);  // Un pequeño retraso para asegurarse de que el proceso ha terminado
+        await interaction.reply({ content: 'Grabación detenida. Aquí tienes el archivo de audio:', files: [audioFilePath] });
     } else {
-        interaction.followUp({ content: 'No hay una grabación en curso para detener.', ephemeral: true });
+        await interaction.reply({ content: 'No hay una grabación en curso para detener.', ephemeral: true });
     }
 }
 

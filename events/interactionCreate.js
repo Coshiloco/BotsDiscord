@@ -13,18 +13,17 @@ module.exports = {
       interaction.editReply({ content: "The timer started..." });
       startSegmentedTimer(interaction, 20 * 60, client, 20);
     }
-
     if (interaction.customId === 'captureAudio') {
       await joinChannelAndPrepareForAudioProcessing(interaction);
-  }
+    }
 
-  if (interaction.customId === 'startRecording') {
-      startRecording(interaction);
-  }
+    if (interaction.customId === 'startRecording') {
+      await startRecording(interaction, client);
+    }
 
-  if (interaction.customId === 'stopRecording') {
-      stopRecording(interaction);
-  }
+    if (interaction.customId === 'stopRecording') {
+      await stopRecording(interaction);
+    }
   },
 };
 
