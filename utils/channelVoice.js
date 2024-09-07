@@ -63,7 +63,7 @@ async function startRecording(interaction, client) {
             .setColor(0xFF0000); // Usar un valor de color válido
         await interaction.update({ content: null, embeds: [embed], components: [row] });
         // Schedule regular updates to the embed to show recording duration
-        client.setInterval(async () => {
+        setInterval(async () => {
             const elapsedSeconds = Math.floor((Date.now() - recordingStartTime) / 1000);
             embed.setDescription(`Recording started by ${interaction.user.tag}\n\n**Recording duration: ${elapsedSeconds}s**`);
             await interaction.editReply({ embeds: [embed] });
