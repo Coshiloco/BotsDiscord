@@ -4,7 +4,7 @@ const path = require('path');
 
 let recordingProcess;
 let audioFilePath;
-let recordingStartTime;
+let recordingStartTime = 0;
 
 async function joinChannelAndPrepareForAudioProcessing(interaction) {
     if (!interaction.member.voice.channelId) {
