@@ -69,8 +69,9 @@ client.on('messageCreate', message => {
 });
 
 client.on('interactionCreate', async interaction => {
-    const event = client.buttons.get(interaction.customId);
-    if (event) event.execute(interaction, client);
+    try {
+        const event = client.buttons.get(interaction.customId);
+        if (event) event.execute(interaction, client);
         if (interaction.isButton()) {
             if (interaction.customId === 'modalForBikeTimeCustom') {
                 const modal = new ModalBuilder()
@@ -92,9 +93,16 @@ client.on('interactionCreate', async interaction => {
                 await interaction.deferReply({ ephemeral: true });
                 interaction.editReply({ content: 'The timer started...' });
                 startSegmentedTimer(interaction, sessionDuration * 60, client, sessionDuration);
-                
             }
         }
+    } catch (error) {
+        console.error('Error in interactionCreate:', error);
+        if (interaction.replied || interaction.deferred) {
+            interaction.followUp({ content: 'An error occurred while processing the interaction.', ephemeral: true });
+        } else {
+            interaction.reply({ content: 'An error occurred while processing the interaction.', ephemeral: true });
+        }
+    }
 });
 
 client.login(process.env.DISCORD_TOKEN);
