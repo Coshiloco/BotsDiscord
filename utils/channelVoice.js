@@ -2,9 +2,12 @@ const { exec } = require('child_process');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const path = require('path');
 
+// utils/channelVoice.js
+
 let recordingProcess;
 let audioFilePath;
 let recordingStartTime = 0;
+let recordingInterval; // Variable para almacenar el ID del intervalo
 
 async function joinChannelAndPrepareForAudioProcessing(interaction) {
     if (!interaction.member.voice.channelId) {
@@ -63,7 +66,7 @@ async function startRecording(interaction, client) {
             .setColor(0xFF0000); // Usar un valor de color válido
         await interaction.update({ content: null, embeds: [embed], components: [row] });
         // Schedule regular updates to the embed to show recording duration
-        setInterval(async () => {
+        recordingInterval = setInterval(async () => {
             const elapsedSeconds = Math.floor((Date.now() - recordingStartTime) / 1000);
             embed.setDescription(`Recording started by ${interaction.user.tag}\n\n**Recording duration: ${elapsedSeconds}s**`);
             await interaction.editReply({ embeds: [embed] });
@@ -78,6 +81,7 @@ async function stopRecording(interaction) {
     if (recordingProcess) {
         recordingProcess.kill('SIGINT');
         recordingProcess = null;
+        clearInterval(recordingInterval); // Limpiar el intervalo de actualización de duración
 
         await interaction.reply({ content: 'Grabación detenida. Aquí tienes el archivo de audio:', files: [audioFilePath] });
     } else {
