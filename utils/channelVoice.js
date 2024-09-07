@@ -79,11 +79,16 @@ async function startRecording(interaction, client) {
 
 async function stopRecording(interaction) {
     if (recordingProcess) {
-        recordingProcess.kill('SIGINT');
-        recordingProcess = null;
-        clearInterval(recordingInterval); // Limpiar el intervalo de actualización de duración
-
-        await interaction.reply({ content: 'Grabación detenida. Aquí tienes el archivo de audio:', files: [audioFilePath] });
+        try {
+            recordingProcess.kill('SIGINT');
+            execSync('taskkill /IM ffmpeg.exe /F'); // Ensure ffmpeg process is killed on Windows
+            recordingProcess = null;
+            clearInterval(recordingInterval);
+            await interaction.reply({ content: 'Grabación detenida. Aquí tienes el archivo de audio:', files: [audioFilePath] });
+        } catch (error) {
+            console.error('Error stopping the recording:', error);
+            await interaction.reply({ content: 'Error al detener la grabación.', ephemeral: true });
+        }
     } else {
         await interaction.reply({ content: 'No hay una grabación en curso para detener.', ephemeral: true });
     }
