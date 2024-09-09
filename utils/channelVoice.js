@@ -78,6 +78,7 @@ async function startRecording(interaction, client) {
 }
 
 async function stopRecording(interaction) {
+    // This code works but prduce error in terminal when this function executing
     if (recordingProcess) {
         try {
             recordingProcess.kill('SIGINT');
